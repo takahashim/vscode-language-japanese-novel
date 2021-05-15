@@ -1,4 +1,4 @@
-const vscode = require('vscode');
+import * as vscode from 'vscode';
 const fs = require('fs');
 const path = require('path');
 const cp = require('child_process');
@@ -9,7 +9,7 @@ const output = vscode.window.createOutputChannel("Novel");
 let html = "";
 
 //コマンド登録
-function activate(context) {
+function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(vscode.commands.registerCommand('Novel.vertical-preview', verticalpreview));
     context.subscriptions.push(vscode.commands.registerCommand('Novel.export-pdf', exportpdf));
     context.subscriptions.push(vscode.commands.registerCommand('Novel.launch-preview-server', launchserver));
@@ -18,7 +18,7 @@ function activate(context) {
 }
 
 
-function launchserver(origineditor){
+function launchserver(origineditor: any){
     //もしサーバーが動いていたら止めて再起動する……のを、実装しなきゃなあ。
     //https://sasaplus1.hatenadiary.com/entry/20121129/1354198092 が良さそう。
 
@@ -26,12 +26,12 @@ function launchserver(origineditor){
     
     // Node http serverを起動する
     const http = require('http');
-    const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+//    const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
 //    const html = fs.readFileSync(path.join(folderPath, 'htdocs/index.html'));
     
 
 
-    var viwerserver = http.createServer(function(request, response) {
+    var viwerserver = http.createServer(function(request: any, response: any) {
         response.writeHead(200, {
             'Content-Type': 'text/html',
             'Cache-Control': 'private, max-age=0'
@@ -45,9 +45,9 @@ function launchserver(origineditor){
     const wsserver = require("ws").Server;
     const s = new wsserver({ port: 5001 });
     
-    s.on("connection", ws => {
+    s.on("connection", (ws: any) => {
         //console.log(previewvariables());
-        ws.on("message", message => {
+        ws.on("message", (message: any) => {
     
             console.log("Received: " + message);
             console.log(getConfig());
@@ -62,20 +62,20 @@ function launchserver(origineditor){
         });
     });
     
-    vscode.workspace.onDidChangeTextDocument((e) => {
+    vscode.workspace.onDidChangeTextDocument((e: any) => {
         var _a;
         if (e.document == ((_a = vscode.window.activeTextEditor) === null || _a === void 0 ? void 0 : _a.document)) {
             publishwebsocketsdelay.presskey(s);
         }
     });
     
-    vscode.window.onDidChangeTextEditorSelection((e) => {
+    vscode.window.onDidChangeTextEditorSelection((e: any) => {
         if (e.textEditor == vscode.window.activeTextEditor) {
             publishwebsocketsdelay.presskey(s);
         }
     });
 
-    vscode.workspace.onDidChangeConfiguration((e) => {
+    vscode.workspace.onDidChangeConfiguration((e: any) => {
             //設定変更
             console.log('setting changed');
             sendsettingwebsockets(s);
@@ -87,14 +87,14 @@ function launchserver(origineditor){
     return s;
 }
 
-function publishwebsockets(socketserver){
-    socketserver.clients.forEach(client => {
+function publishwebsockets(socketserver: any){
+    socketserver.clients.forEach((client: any) => {
         client.send(editorText("active"));
     }); 
 }
 
-function sendsettingwebsockets(socketserver){
-    socketserver.clients.forEach(client => {
+function sendsettingwebsockets(socketserver: any){
+    socketserver.clients.forEach((client: any) => {
         client.send(( JSON.stringify(getConfig())));
     }); 
 }
@@ -103,12 +103,12 @@ function getConfig(){
     const config = vscode.workspace.getConfiguration('Novel');
 
     const lineheightrate = 1.75;
-    const fontfamily        = config.get('preview.font-family');
-    const fontsize          = config.get('preview.fontsize');
-    const numfontsize       = parseInt(/(\d+)(\D+)/.exec(fontsize)[1]);
-    const unitoffontsize    = /(\d+)(\D+)/.exec(fontsize)[2];
-    const linelength        = config.get('preview.linelength');
-    const linesperpage      = config.get('preview.linesperpage');
+    const fontfamily:   string  = config.get('preview.font-family')!;
+    const fontsize:     string  = config.get('preview.fontsize')!;
+    const numfontsize           = parseInt(/(\d+)(\D+)/.exec(fontsize)![1]);
+    const unitoffontsize    = /(\d+)(\D+)/.exec(fontsize)![2];
+    const linelength:   number        = config.get('preview.linelength')!;
+    const linesperpage: number      = config.get('preview.linesperpage')!;
     const pagewidth         = (linesperpage * numfontsize * lineheightrate * 1.003) + unitoffontsize;
     const pageheight        = (linelength * numfontsize) + unitoffontsize;
     const lineheight        = (numfontsize * lineheightrate) + unitoffontsize;
@@ -130,19 +130,19 @@ function getConfig(){
 
 var keypressflag = false;
 
-var publishwebsocketsdelay = {
-    publish: function(socketserver) {
+var publishwebsocketsdelay: any = {
+    publish: function(socketserver: any) {
         publishwebsockets(socketserver);
         keypressflag = false;
         delete this.timeoutID;
     },
-    presskey: function(s) {
+    presskey: function(s: any) {
       //this.cancel();
       if (!keypressflag){
-            var updatecounter = Math.ceil(vscode.window.activeTextEditor.document.getText().length / 10);
+            var updatecounter = Math.ceil(vscode.window.activeTextEditor!.document.getText().length / 10);
             var self = this;
             var socketserver = s;
-            var timer = timer;
+            var timer: any = timer;
             this.timeoutID = setTimeout(function(socketserver) {
                 self.publish(socketserver);
                 }, updatecounter, socketserver);
@@ -154,7 +154,7 @@ var publishwebsocketsdelay = {
         window.clearTimeout(this.timeoutID);
         delete this.timeoutID;
       }
-    }
+    },
   };
 
 function verticalpreview(){
@@ -206,7 +206,7 @@ function verticalpreview(){
 function exportpdf(){
     const myhtml = getWebviewContent();
     //console.log(myhtml);
-    const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    const folderPath = vscode.workspace.workspaceFolders![0].uri.fsPath;
     let mypath = path.join(folderPath, 'publish.html');
     let myworkingdirectory = path.join(folderPath, '');
     let vivliocommand = 'vivliostyle build ';
@@ -221,11 +221,11 @@ function exportpdf(){
 
         output.appendLine(`startig to publish: ${vivliocommand}`);
 
-    fs.writeFile(mypath, myhtml, (err) => {
+    fs.writeFile(mypath, myhtml, (err: any) => {
         if (err) {console.log(err)};
         //https://docs.vivliostyle.org/#/ja/vivliostyle-cli
         output.appendLine(`saving pdf to ${vivliocommand}`);
-        cp.exec(vivliocommand, (err, stdout, stderr) => {
+        cp.exec(vivliocommand, (err: any, stdout: any, stderr: any) => {
                 if (err) {
                     console.log(`stderr: ${stderr}`);
                     output.appendLine(`stderr: ${stderr}`);
@@ -248,14 +248,14 @@ function deactivate() {
 
 module.exports = { activate, deactivate };
 
-function editorText(origineditor){
+function editorText(origineditor: any){
     if(origineditor === "active"){
         myeditor = vscode.window.activeTextEditor;
     } else {
         myeditor = origineditor;
     }
 
-    let text = myeditor.document.getText();
+    let text = myeditor!.document.getText();
     let cursorOffset = myeditor ? myeditor.document.offsetAt(myeditor.selection.anchor) : 0;
     var myHTML = "";
 
@@ -283,12 +283,12 @@ function editorText(origineditor){
     return markUpHtml(myHTML);
 }
 
-function markUpHtml( myhtml ){
+function markUpHtml( myhtml: string ){
     var taggedHTML = myhtml;
     //configuration 読み込み
     const config = vscode.workspace.getConfiguration('Novel');
     let userregex = new Array(0);
-        userregex = config.get('preview.userregex');
+        userregex = config.get('preview.userregex')!;
 //    console.log(userregex, userregex.length);
     if (userregex.length > 0){
         
@@ -324,20 +324,20 @@ function markUpHtml( myhtml ){
 function getWebviewContent() {
 
     //configuration 読み込み
+
     const config = vscode.workspace.getConfiguration('Novel');
-        let lineheightrate = 1.75;
-        let fontfamily = config.get('preview.font-family');
-        let fontsize = config.get('preview.fontsize');
-        let numfontsize = parseInt(/(\d+)(\D+)/.exec(fontsize)[1]);
-        let unitoffontsize = /(\d+)(\D+)/.exec(fontsize)[2];
 
-        let linelength = config.get('preview.linelength');
-        let linesperpage = config.get('preview.linesperpage');
+    const lineheightrate = 1.75;
+    const fontfamily:   string  = config.get('preview.font-family')!;
+    const fontsize:     string  = config.get('preview.fontsize')!;
+    const numfontsize           = parseInt(/(\d+)(\D+)/.exec(fontsize)![1]);
+    const unitoffontsize    = /(\d+)(\D+)/.exec(fontsize)![2];
+    const linelength:   number        = config.get('preview.linelength')!;
+    const linesperpage: number      = config.get('preview.linesperpage')!;
+    const pagewidth         = (linesperpage * numfontsize * lineheightrate * 1.003) + unitoffontsize;
+    const pageheight        = (linelength * numfontsize) + unitoffontsize;
+    const lineheight        = (numfontsize * lineheightrate) + unitoffontsize;
 
-        let pagewidth = ( linesperpage * numfontsize * lineheightrate * 1.003) + unitoffontsize;
-        let pageheight = (linelength * numfontsize) + unitoffontsize;
-        let lineheight = ( numfontsize * lineheightrate) + unitoffontsize;
-        //console.log(lineheight);
 
     var mytext = editorText("active");
     return `<!DOCTYPE html>

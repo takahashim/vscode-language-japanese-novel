@@ -9,18 +9,18 @@
     "engines": {
         "vscode": "^1.54.0"
     },
-    "main": "./extension.ts",
+    "main": "./out/main.js",
     "dependencies": {
         "@vivliostyle/cli": "^3.5.0",
         "http": "^0.0.1-security",
         "http-server": "^0.12.3",
+        "typescript": "^4.2.4",
         "ws": "^7.4.5"
     },
     "scripts": {
-        "vscode:prepublish": "npm run -S esbuild-base -- --minify",
-        "esbuild-base": "esbuild ./extension.ts --bundle --outfile=out/main.js --external:vscode --format=cjs --platform=node",
-        "esbuild": "npm run -S esbuild-base -- --sourcemap",
-        "esbuild-watch": "npm run -S esbuild-base -- --sourcemap --watch",
+        "vscode:prepublish": "webpack --mode production",
+        "webpack": "webpack --mode development",
+        "webpack-dev": "webpack --mode development --watch",
         "test-compile": "tsc -p ./"
     },
     "activationEvents": [
