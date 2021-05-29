@@ -17,12 +17,17 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "lint": "eslint . --ext ts",
+    "lint": "run-s lint:eslint lint:prettier",
+    "lint:eslint": "eslint . --ext ts",
+    "lint:prettier": "prettier --check src",
     "compile": "tsc -p ./",
     "pretest": "npm run compile",
     "vscode:pretest": "npm run compile",
     "watch": "tsc -watch -p ./",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./out/test/runTest.js",
+    "fix": "run-s fix:eslint fix:prettier",
+    "fix:eslint": "eslint . --fix --ext ts",
+    "fix:prettier": "prettier --write src"
   },
   "activationEvents": [
     "*"
@@ -110,12 +115,15 @@
     "@typescript-eslint/parser": "^4.23.0",
     "child_process": "^1.0.2",
     "eslint": "^7.26.0",
+    "eslint-config-prettier": "^8.3.0",
     "fs": "^0.0.1-security",
     "glob": "^7.1.6",
     "http": "^0.0.1-security",
     "http-server": "^0.12.3",
     "mocha": "^8.4.0",
+    "npm-run-all": "^4.1.5",
     "path": "^0.12.7",
+    "prettier": "^2.3.0",
     "sinon": "^10.0.0",
     "typescript": "^4.2.4",
     "utf-8-validate": "^5.0.5",
