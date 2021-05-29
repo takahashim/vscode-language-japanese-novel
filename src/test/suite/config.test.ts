@@ -26,7 +26,7 @@ suite('Config Test Suite', () => {
                 return defaultVal;
             }
 
-            const configMock = {get: fakeGetFunc} as vscode.WorkspaceConfiguration;
+            const configMock = { get: fakeGetFunc } as vscode.WorkspaceConfiguration;
 
             sandbox.stub(vscode.workspace, 'getConfiguration').returns(configMock);
         });
@@ -56,16 +56,16 @@ suite('Config Test Suite', () => {
         setup(() => {
             function fakeGetFunc(key: string, defaultVal: string | number) {
                 switch (key) {
-                case 'preview.font-family':
-                    return 'Helvetica';
-                case 'preview.fontsize':
-                    return '48px';
-                default:
-                    return defaultVal;
+                    case 'preview.font-family':
+                        return 'Helvetica';
+                    case 'preview.fontsize':
+                        return '48px';
+                    default:
+                        return defaultVal;
                 }
             }
 
-            const configMock = {get: fakeGetFunc} as vscode.WorkspaceConfiguration;
+            const configMock = { get: fakeGetFunc } as vscode.WorkspaceConfiguration;
 
             sandbox.stub(vscode.workspace, 'getConfiguration').returns(configMock);
         });

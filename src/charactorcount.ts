@@ -1,18 +1,25 @@
 //Original code is published by 8amjp/vsce-charactercount] https://github.com/8amjp/vsce-charactercount under MIT
 
-"use strict";
-import { window, Disposable, ExtensionContext, StatusBarAlignment, StatusBarItem, TextDocument, workspace } from 'vscode';
-import {fileList, draftRoot} from './compile';
+'use strict';
+import {
+    window,
+    Disposable,
+    ExtensionContext,
+    StatusBarAlignment,
+    StatusBarItem,
+    TextDocument,
+    workspace,
+} from 'vscode';
+import { fileList, draftRoot } from './compile';
 
 let projectCharacterCount = Intl.NumberFormat().format(fileList(draftRoot(), 0).length);
 
 export class CharacterCounter {
-
     private _statusBarItem!: StatusBarItem;
     public updateCharacterCount() {
         if (!this._statusBarItem) {
             this._statusBarItem = window.createStatusBarItem(StatusBarAlignment.Left);
-        } 
+        }
         const editor = window.activeTextEditor;
         if (!editor) {
             this._statusBarItem.hide();
@@ -29,18 +36,18 @@ export class CharacterCounter {
         let docContent = doc.getText();
         // カウントに含めない文字を削除する
         docContent = docContent
-            .replace(/\s/g, '')          // すべての空白文字
-            .replace(/《(.+?)》/g, '')    // ルビ範囲指定記号とその中の文字
-            .replace(/[|｜]/g, '')       // ルビ開始記号
+            .replace(/\s/g, '') // すべての空白文字
+            .replace(/《(.+?)》/g, '') // ルビ範囲指定記号とその中の文字
+            .replace(/[|｜]/g, '') // ルビ開始記号
             .replace(/<!--(.+?)-->/, ''); // コメントアウト
         let characterCount = 0;
-        if (docContent !== "") {
+        if (docContent !== '') {
             characterCount = docContent.length;
         }
         return characterCount;
     }
 
-    public _updateProjectCharacterCount(): any{
+    public _updateProjectCharacterCount(): any {
         projectCharacterCount = Intl.NumberFormat().format(fileList(draftRoot(), 0).length);
         this.updateCharacterCount();
     }
@@ -51,7 +58,6 @@ export class CharacterCounter {
 }
 
 export class CharacterCounterController {
-
     private _characterCounter: CharacterCounter;
     private _disposable: Disposable;
 

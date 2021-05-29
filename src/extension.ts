@@ -3,13 +3,11 @@ import * as cp from 'child_process';
 import * as http from 'http';
 import * as websockets from 'ws';
 import { getConfig } from './config';
-import compileDocs from './compile'; 
-import {CharacterCounter, CharacterCounterController} from './charactorcount';
-
+import compileDocs from './compile';
+import { CharacterCounter, CharacterCounterController } from './charactorcount';
 
 let myEditor = vscode.window.activeTextEditor;
-const output = vscode.window.createOutputChannel("Novel");
-
+const output = vscode.window.createOutputChannel('Novel');
 
 //リソースとなるhtmlファイル
 let html: Buffer;
@@ -20,7 +18,6 @@ export function activate(context: vscode.ExtensionContext): void {
     context.subscriptions.push(vscode.commands.registerCommand('Novel.vertical-preview', verticalpreview));
     context.subscriptions.push(vscode.commands.registerCommand('Novel.export-pdf', exportpdf));
     context.subscriptions.push(vscode.commands.registerCommand('Novel.launch-preview-server', launchserver));
-
 
     const characterCounter = new CharacterCounter();
     const controller = new CharacterCounterController(characterCounter);
@@ -33,58 +30,51 @@ export function activate(context: vscode.ExtensionContext): void {
     });
 }
 
-
-function launchserver(originEditor: any){
+function launchserver(originEditor: any) {
     //もしサーバーが動いていたら止めて再起動する……のを、実装しなきゃなあ。
     //https://sasaplus1.hatenadiary.com/entry/20121129/1354198092 が良さそう。
 
-
-    
     // Node http serverを起動する
 
-//    const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-//    const html = fs.readFileSync(path.join(folderPath, 'htdocs/index.html'));
-    
+    //    const folderPath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+    //    const html = fs.readFileSync(path.join(folderPath, 'htdocs/index.html'));
 
-
-    const viewerServer = http.createServer(function(request, response) {
+    const viewerServer = http.createServer(function (request, response) {
         response.writeHead(200, {
             'Content-Type': 'text/html',
-            'Cache-Control': 'private, max-age=0'
+            'Cache-Control': 'private, max-age=0',
         });
         response.end(html);
-    })
-    
+    });
+
     viewerServer.listen(8080);
-    
+
     // Node Websockets Serverを起動する
     const wsServer = websockets.Server;
     const s = new wsServer({ port: 5001 });
-    
-    s.on("connection", ws => {
-        //console.log(previewvariables());
-        ws.on("message", message => {
-    
-            console.log("Received: " + message);
 
-    
-            if (message === "hello") {
-                ws.send( JSON.stringify(getConfig()));
+    s.on('connection', (ws) => {
+        //console.log(previewvariables());
+        ws.on('message', (message) => {
+            console.log('Received: ' + message);
+
+            if (message === 'hello') {
+                ws.send(JSON.stringify(getConfig()));
                 //ws.send( editorText());
-            } else if (message === "givemedata"){
-                console.log("sending body");
-                ws.send( editorText(originEditor));
+            } else if (message === 'givemedata') {
+                console.log('sending body');
+                ws.send(editorText(originEditor));
             }
         });
     });
-    
+
     vscode.workspace.onDidChangeTextDocument((e) => {
         let _a;
         if (e.document == ((_a = vscode.window.activeTextEditor) === null || _a === void 0 ? void 0 : _a.document)) {
             publishWebsocketsDelay.presskey(s);
         }
     });
-    
+
     vscode.window.onDidChangeTextEditorSelection((e) => {
         if (e.textEditor == vscode.window.activeTextEditor) {
             publishWebsocketsDelay.presskey(s);
@@ -92,66 +82,66 @@ function launchserver(originEditor: any){
     });
 
     vscode.workspace.onDidChangeConfiguration(() => {
-            //設定変更
-            console.log('setting changed');
-            sendsettingwebsockets(s);
+        //設定変更
+        console.log('setting changed');
+        sendsettingwebsockets(s);
     });
-
 
     publishWebsocketsDelay.presskey(s);
 
     return s;
 }
 
-function publishwebsockets(socketServer: websockets.Server){
+function publishwebsockets(socketServer: websockets.Server) {
     socketServer.clients.forEach((client: websockets) => {
-        client.send(editorText("active"));
-    }); 
+        client.send(editorText('active'));
+    });
 }
 
-function sendsettingwebsockets(socketServer: websockets.Server){
+function sendsettingwebsockets(socketServer: websockets.Server) {
     socketServer.clients.forEach((client: websockets) => {
-        client.send(( JSON.stringify(getConfig())));
-    }); 
+        client.send(JSON.stringify(getConfig()));
+    });
 }
 
 let keyPressFlag = false;
 
 const publishWebsocketsDelay: any = {
-    publish: function(socketServer: websockets.Server) {
+    publish: function (socketServer: websockets.Server) {
         publishwebsockets(socketServer);
         keyPressFlag = false;
         delete this.timeoutID;
     },
-    presskey: function(s: websockets.Server) {
+    presskey: function (s: websockets.Server) {
         //this.cancel();
-        if (!keyPressFlag){
+        if (!keyPressFlag) {
             const currentEditor = vscode.window.activeTextEditor;
             if (currentEditor) {
-                const updateCounter = Math.min(
-                                        Math.ceil(currentEditor.document.getText().length / 50),
-                                        1500
-                                        );
-                this.timeoutID = setTimeout(socketServer => {
-                    this.publish(socketServer);
-                }, updateCounter, s);
+                const updateCounter = Math.min(Math.ceil(currentEditor.document.getText().length / 50), 1500);
+                this.timeoutID = setTimeout(
+                    (socketServer) => {
+                        this.publish(socketServer);
+                    },
+                    updateCounter,
+                    s
+                );
                 keyPressFlag = true;
             }
         }
     },
-    cancel: function() {
-      if(typeof this.timeoutID == "number") {
-        this.clearTimeout(this.timeoutID);
-        delete this.timeoutID;
-      }
-    }
-  };
+    cancel: function () {
+        if (typeof this.timeoutID == 'number') {
+            this.clearTimeout(this.timeoutID);
+            delete this.timeoutID;
+        }
+    },
+};
 
-function verticalpreview(){
+function verticalpreview() {
     const originEditor = vscode.window.activeTextEditor;
     launchserver(originEditor);
 
-//    vscode.window.showInformationMessage('Hello, world!');
+    //    vscode.window.showInformationMessage('Hello, world!');
     const panel = vscode.window.createWebviewPanel(
         'preview', // Identifies the type of the webview. Used internally
         '原稿プレビュー', // Title of the panel displayed to the user
@@ -191,7 +181,12 @@ function exportpdf(): void {
         const vivlioSubCommand = 'build';
 
         output.appendLine(`starting to publish: ${myPath}`);
-        const vivlioParams = [vivlioSubCommand, myPath.fsPath, '-o', vscode.Uri.joinPath(myWorkingDirectory, "output.pdf").fsPath];
+        const vivlioParams = [
+            vivlioSubCommand,
+            myPath.fsPath,
+            '-o',
+            vscode.Uri.joinPath(myWorkingDirectory, 'output.pdf').fsPath,
+        ];
 
         output.appendLine(`starting to publish: ${vivlioCommand} ${vivlioParams}`);
         const myHtmlBinary = Buffer.from(myHtml, 'utf8');
@@ -202,17 +197,15 @@ function exportpdf(): void {
                 if (err) {
                     console.log(`stderr: ${stderr}`);
                     output.appendLine(`stderr: ${stderr}`);
-                    return
+                    return;
                 }
                 output.appendLine(`stdout: ${stdout}`);
                 output.appendLine('PDFの保存が終わりました');
-            })
+            });
             output.appendLine('HTMLの書き込みが完了しました');
         });
     }
 }
-
-
 
 function deactivate() {
     return undefined;
@@ -220,8 +213,8 @@ function deactivate() {
 
 module.exports = { activate, deactivate };
 
-function editorText(originEditor: any){
-    if(originEditor === "active"){
+function editorText(originEditor: any) {
+    if (originEditor === 'active') {
         myEditor = vscode.window.activeTextEditor;
     } else {
         myEditor = originEditor;
@@ -229,23 +222,28 @@ function editorText(originEditor: any){
 
     const text = myEditor!.document.getText();
     const cursorOffset = myEditor ? myEditor.document.offsetAt(myEditor.selection.anchor) : 0;
-    let myHTML = "";
+    let myHTML = '';
 
-    let cursorTaggedHtml = "";
+    let cursorTaggedHtml = '';
     // カーソル位置
-    if ( text.slice(cursorOffset, cursorOffset + 1) == '\n'){
+    if (text.slice(cursorOffset, cursorOffset + 1) == '\n') {
         cursorTaggedHtml = text.slice(0, cursorOffset) + '<span id="cursor">　</span>' + text.slice(cursorOffset);
     } else {
-        cursorTaggedHtml = text.slice(0, cursorOffset) + '<span id="cursor">' + text.slice(cursorOffset, cursorOffset + 1) + '</span>' + text.slice(cursorOffset + 1);
+        cursorTaggedHtml =
+            text.slice(0, cursorOffset) +
+            '<span id="cursor">' +
+            text.slice(cursorOffset, cursorOffset + 1) +
+            '</span>' +
+            text.slice(cursorOffset + 1);
     }
 
     const paragraphs = cursorTaggedHtml.split('\n');
     //console.log(paragraphs);
-    paragraphs.forEach(paragraph => {
+    paragraphs.forEach((paragraph) => {
         //console.log(paragraph);
         if (paragraph.match(/^\s*$/)) {
             myHTML += '<p class="blank">_' + paragraph + '</p>';
-        } else if( paragraph.match(/^<span id="cursor">$/) || paragraph.match(/^<\/span>$/) ){
+        } else if (paragraph.match(/^<span id="cursor">$/) || paragraph.match(/^<\/span>$/)) {
             myHTML += '<p class="blank">_</p><span id="cursor">';
         } else {
             myHTML += '<p>' + paragraph + '</p>';
@@ -255,17 +253,16 @@ function editorText(originEditor: any){
     return markUpHtml(myHTML);
 }
 
-function markUpHtml( myHtml: string ){
+function markUpHtml(myHtml: string) {
     let taggedHTML = myHtml;
     //configuration 読み込み
     const config = vscode.workspace.getConfiguration('Novel');
     const userRegex = config.get<Array<[string, string]>>('preview.userregex', []);
-    if (userRegex.length > 0){
-        
-        userRegex.forEach( function(element){
-                const thisMatch = new RegExp(element[0], 'gi');
-                const thisReplace = element[1];
-                taggedHTML = taggedHTML.replace(thisMatch, thisReplace);
+    if (userRegex.length > 0) {
+        userRegex.forEach(function (element) {
+            const thisMatch = new RegExp(element[0], 'gi');
+            const thisReplace = element[1];
+            taggedHTML = taggedHTML.replace(thisMatch, thisReplace);
             //}
         });
     }
@@ -274,12 +271,15 @@ function markUpHtml( myHtml: string ){
     taggedHTML = taggedHTML.replace(/<p>［＃ここから[２2二]文字下げ］<\/p>/g, '<div class="indent-2">');
     taggedHTML = taggedHTML.replace(/<p>［＃ここから[３3三]文字下げ］<\/p>/g, '<div class="indent-3">');
     taggedHTML = taggedHTML.replace(/<p>［＃ここで字下げ終わり］<\/p>/g, '</div>');
-    taggedHTML = taggedHTML.replace(/<!-- (.+?) -->/g, '<span class="comment"><span class="commentbody">$1</span></span>');
+    taggedHTML = taggedHTML.replace(
+        /<!-- (.+?) -->/g,
+        '<span class="comment"><span class="commentbody">$1</span></span>'
+    );
     taggedHTML = taggedHTML.replace(/｜([^｜\n]+?)《([^《]+?)》/g, '<ruby>$1<rt>$2</rt></ruby>');
     taggedHTML = taggedHTML.replace(/([一-鿏々-〇]+?)《(.+?)》/g, '<ruby>$1<rt>$2</rt></ruby>');
     taggedHTML = taggedHTML.replace(/(.+?)［＃「\1」に傍点］/g, '<em class="side-dot">$1</em>');
 
-/*     s.clients.forEach(client => {
+    /*     s.clients.forEach(client => {
         //client.send(previewvariables());
         client.send(taggedHTML);
     });
@@ -287,12 +287,10 @@ function markUpHtml( myHtml: string ){
     return taggedHTML;
 }
 
-
 function getWebviewContent() {
-
     //configuration 読み込み
     const previewSettings = getConfig();
-/*     const config = vscode.workspace.getConfiguration('Novel');
+    /*     const config = vscode.workspace.getConfiguration('Novel');
         let lineheightrate = 1.75;
         let fontfamily = config.get('preview.font-family');
         let fontsize = config.get('preview.fontsize');
@@ -305,9 +303,9 @@ function getWebviewContent() {
         let pagewidth = ( linesperpage * numfontsize * lineheightrate * 1.003) + unitoffontsize;
         let pageheight = (linelength * numfontsize) + unitoffontsize;
         let lineheight = ( numfontsize * lineheightrate) + unitoffontsize;
-  */       //console.log(lineheight);
+  */ //console.log(lineheight);
 
-    const myText = editorText("active");
+    const myText = editorText('active');
     return `<!DOCTYPE html>
   <html lang="ja">
   <head>
@@ -698,4 +696,4 @@ function getWebviewContent() {
 </script>
   </body>
   </html>`;
-  }
+}
